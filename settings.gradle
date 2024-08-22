@@ -1,2 +1,4 @@
 rootProject.name = 'mathRemoteCentralExample'
+include 'math-lib'
+include 'math-lib-spring'
 

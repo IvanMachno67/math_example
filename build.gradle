@@ -1,19 +1,95 @@
 plugins {
-    id 'java'
+    id 'java-library'
+    id 'maven-publish'
+    id 'org.jreleaser' version '1.13.1'
 }
 
-group = 'org.example'
-version = '1.0-SNAPSHOT'
 
-repositories {
-    mavenCentral()
+allprojects {
+    repositories {
+        mavenCentral()
+        maven { url 'https://repo.spring.io/milestone' }
+    }
 }
 
-dependencies {
-    testImplementation platform('org.junit:junit-bom:5.9.1')
-    testImplementation 'org.junit.jupiter:junit-jupiter'
+subprojects {
+    apply plugin: 'java-library'
+    apply plugin: 'maven-publish'
+    apply plugin: 'org.jreleaser'
+    group = 'io.github.ivanmachno67'
+    version = '0.1.0'
+    java {
+        sourceCompatibility = JavaVersion.VERSION_21
+        targetCompatibility = JavaVersion.VERSION_21
+        withJavadocJar()
+        withSourcesJar()
+        toolchain {
+            languageVersion = JavaLanguageVersion.of(21)
+        }
+    }
+    configurations {
+        compileOnly {
+            extendsFrom annotationProcessor
+        }
+    }
+    dependencies {
+        // Lombok
+        compileOnly 'org.projectlombok:lombok:1.18.30'
+        annotationProcessor 'org.projectlombok:lombok:1.18.30'
+    }
+    publishing {
+        publications {
+            mavenJava(MavenPublication) {
+                from components.java
+                pom {
+                    name = 'app'
+                    description = 'Application for testing new Maven central publishing with gradle'
+                    url = 'https://github.com/IvanMachno67/math_example'
+                    inceptionYear = '2024'
+                    licenses {
+                        license {
+                            name = 'Apache-2.0'
+                            url = 'https://spdx.org/licenses/Apache-2.0.html'
+                        }
+                    }
+                    developers {
+                        developer {
+                            name = 'ivan machno'
+                        }
+                    }
+                    scm {
+                        connection = 'scm:git:https://github.com/IvanMachno67/math_example.git'
+                        developerConnection = 'scm:git:ssh://github.com/IvanMachno67/math_example.git'
+                        url = 'https://github.com/IvanMachno67/math_example'
+                    }
+                }
+            }
+        }
+        repositories {
+            maven {
+                url = layout.buildDirectory.dir('staging-deploy')
+            }
+        }
+    }
+
+    jreleaser {
+        signing {
+            active = 'ALWAYS'
+            armored = true
+        }
+        deploy {
+            maven {
+                mavenCentral {
+                    sonatype {
+                        active = 'ALWAYS'
+                        url = 'https://central.sonatype.com/api/v1/publisher'
+                        stagingRepository('target/staging-deploy')
+                    }
+                }
+
+            }
+        }
+    }
 }
 
-test {
-    useJUnitPlatform()
-}
+
